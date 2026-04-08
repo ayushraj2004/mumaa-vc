@@ -9,10 +9,13 @@ RUN npm install
 
 COPY . .
 
+# Generate Prisma client (no DB connection needed)
 RUN npx prisma generate
 
+# Build Next.js — use dummy DB URL so Prisma doesn't fail at build time
+ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
 ENV NODE_OPTIONS=--max-old-space-size=1024
-RUN npm run build
+RUN npx next build
 
 ENV NODE_ENV=production
 ENV PORT=10000
