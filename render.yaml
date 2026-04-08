@@ -10,10 +10,7 @@ services:
       - key: PORT
         value: "10000"
       - key: CORS_ORIGIN
-        fromService:
-          name: mumaa-web
-          type: web
-          property: hostport
+        value: "*"
 
   # ─── Next.js Web Application ─────────────────────────
   - type: web
@@ -25,17 +22,11 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: NEXT_PUBLIC_SOCKET_URL
-        fromService:
-          name: mumaa-socket
-          type: web
-          property: hostport
+        sync: false
       - key: NEXTAUTH_SECRET
         generateValue: true
       - key: NEXTAUTH_URL
-        fromService:
-          name: mumaa-web
-          type: web
-          property: hostport
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: NEXT_PUBLIC_TURN_URL
