@@ -8,8 +8,9 @@ import { NextResponse } from 'next/server';
  * vars are empty if not set during `next build`.
  */
 export async function GET() {
+  const socketUrl = process.env.SOCKET_API_URL || process.env.NEXT_PUBLIC_SOCKET_URL || '';
   return NextResponse.json({
-    socketUrl: process.env.SOCKET_API_URL || process.env.NEXT_PUBLIC_SOCKET_URL || '',
+    socketUrl,
     turnUrl: process.env.TURN_URL || process.env.NEXT_PUBLIC_TURN_URL || '',
     turnUsername: process.env.TURN_USERNAME || process.env.NEXT_PUBLIC_TURN_USERNAME || '',
     turnCredential: process.env.TURN_CREDENTIAL || process.env.NEXT_PUBLIC_TURN_CREDENTIAL || '',

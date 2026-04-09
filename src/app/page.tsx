@@ -231,20 +231,24 @@ export default function Home() {
         const { io } = await import('socket.io-client');
         if (disconnected) return;
 
-        // Fetch runtime config from server (env vars without NEXT_PUBLIC_ prefix)
-        let socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || '';
-        if (!socketUrl) {
-          try {
-            const cfg = await fetch('/api/config');
-            if (cfg.ok) {
-              const data = await cfg.json();
-              socketUrl = data.socketUrl || '';
-            }
-          } catch {
-            // fallback: empty string (development proxy)
+        // Always fetch from /api/config to get runtime socket URL
+        let socketUrl = '';
+        try {
+          const cfg = await fetch('/api/config');
+          if (cfg.ok) {
+            const data = await cfg.json();
+            socketUrl = data.socketUrl || '';
           }
+        } catch {
+          socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || '';
         }
-        console.log('[Socket] Connecting to:', socketUrl || '(same origin - dev proxy)');
+
+        if (!socketUrl) {
+          console.error('[Socket] No socket URL available');
+          return;
+        }
+
+        console.log('[Socket] Connecting to:', socketUrl);
         const socket = io(socketUrl, {
           path: '/socket.io',
           transports: ['polling', 'websocket'],
