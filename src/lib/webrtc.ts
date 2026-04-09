@@ -16,70 +16,36 @@
  * With TURN: Works on ALL networks including strict mobile NAT
  */
 
-/** Cached TURN config fetched from /api/config */
-let cachedConfig: { turnUrl: string; turnUsername: string; turnCredential: string } | null = null;
-
-async function fetchTurnConfig(): Promise<{ turnUrl: string; turnUsername: string; turnCredential: string }> {
-  if (cachedConfig) return cachedConfig;
-
-  try {
-    const res = await fetch('/api/config');
-    if (res.ok) {
-      const data = await res.json();
-      cachedConfig = {
-        turnUrl: data.turnUrl || '',
-        turnUsername: data.turnUsername || '',
-        turnCredential: data.turnCredential || '',
-      };
-      return cachedConfig;
-    }
-  } catch {
-    // fallback to empty
-  }
-
-  return { turnUrl: '', turnUsername: '', turnCredential: '' };
-}
-
 export async function getIceServers(): Promise<RTCConfiguration> {
   const servers: RTCIceServer[] = [
-    // Google STUN servers (free, reliable)
+    // STUN servers
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun3.l.google.com:19302' },
-    { urls: 'stun:stun.services.mozilla.com:3478' },
-    { urls: 'stun:stun.stunprotocol.org:3478' },
+    { urls: 'stun:stun.relay.metered.ca:80' },
+    // Metered.ca TURN servers (works across all networks)
+    {
+      urls: 'turn:global.relay.metered.ca:80',
+      username: 'c98a0be62b77a83c0a53b3b4f7878e8bcf8a',
+      credential: 'powwjWVZKCPP1PQA',
+    },
+    {
+      urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+      username: 'c98a0be62b77a83c0a53b3b4f7878e8bcf8a',
+      credential: 'powwjWVZKCPP1PQA',
+    },
+    {
+      urls: 'turn:global.relay.metered.ca:443',
+      username: 'c98a0be62b77a83c0a53b3b4f7878e8bcf8a',
+      credential: 'powwjWVZKCPP1PQA',
+    },
+    {
+      urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+      username: 'c98a0be62b77a83c0a53b3b4f7878e8bcf8a',
+      credential: 'powwjWVZKCPP1PQA',
+    },
   ]
 
-  // Try NEXT_PUBLIC_ vars first (build-time, for local dev)
-  let turnUrl = process.env.NEXT_PUBLIC_TURN_URL || ''
-  let turnUser = process.env.NEXT_PUBLIC_TURN_USERNAME || ''
-  let turnCred = process.env.NEXT_PUBLIC_TURN_CREDENTIAL || ''
-
-  // If no build-time vars, fetch from runtime config API
-  if (!turnUrl) {
-    const cfg = await fetchTurnConfig();
-    turnUrl = cfg.turnUrl;
-    turnUser = cfg.turnUsername;
-    turnCred = cfg.turnCredential;
-  }
-
-  if (turnUrl && turnUser && turnCred) {
-    const urls = turnUrl.split(',').map(u => u.trim()).filter(Boolean)
-    servers.push({ urls, username: turnUser, credential: turnCred })
-    console.log('[WebRTC] TURN server configured:', urls.length, 'URL(s)')
-  } else {
-    // Fallback: Metered.ca Open Relay (free, may have rate limits)
-    const meteredUser = 'openrelayproject'
-    const meteredCred = 'openrelayproject'
-    servers.push(
-      { urls: 'turn:openrelay.metered.ca:80', username: meteredUser, credential: meteredCred },
-      { urls: 'turn:openrelay.metered.ca:443', username: meteredUser, credential: meteredCred },
-      { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: meteredUser, credential: meteredCred },
-      { urls: 'turns:openrelay.metered.ca:443?transport=tcp', username: meteredUser, credential: meteredCred },
-    )
-  }
-
+  console.log('[WebRTC] ICE servers configured with Metered.ca TURN')
   return { iceServers: servers, iceCandidatePoolSize: 10 }
 }
 
