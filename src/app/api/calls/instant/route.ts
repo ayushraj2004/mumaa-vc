@@ -130,29 +130,15 @@ export async function POST(req: NextRequest) {
 
     // Notify nanny via socket service HTTP API (real-time ringing)
     try {
-      // SOCKET_API_URL can be full URL (production) or just port (development)
-      const SOCKET_API_PORT = process.env.SOCKET_API_PORT || 3003;
-      const SOCKET_API_URL = process.env.SOCKET_API_URL || `http://localhost:${SOCKET_API_PORT}`;
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
-      await fetch(`${SOCKET_API_URL}/emit`, {
-        method: 'POST',
-        signal: controller.signal,
-        headers: { 'Content-Type': 'application/json', 'Connection': 'close' },
-        body: JSON.stringify({
-          toUserId: nannyId,
-          event: 'incoming-call',
-          data: {
-            callId: call.id,
-            callerId: parentId,
-            callerName: parent.name,
-            callerAvatar: parent.avatar,
-            callType: 'INSTANT',
-            callRoomId: call.callRoomId,
-          },
-        }),
-      });
-      clearTimeout(timeout);
+      const { emitToUser } = await import('@/lib/socket-emit')
+      await emitToUser(nannyId, 'incoming-call', {
+        callId: call.id,
+        callerId: parentId,
+        callerName: parent.name,
+        callerAvatar: parent.avatar,
+        callType: 'INSTANT',
+        callRoomId: call.callRoomId,
+      })
     } catch (socketErr) {
       console.warn('[Instant Call] Could not notify via socket, falling back to DB notification only:', socketErr);
     }
