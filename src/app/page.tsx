@@ -310,9 +310,8 @@ export default function Home() {
             const otherName = user.role === 'PARENT'
               ? (store.currentCall.nannyName || 'Nanny')
               : (store.currentCall.parentName || 'Parent');
-
+            store.setWaitingForNanny(false);
             if (store.waitingForNanny) {
-              store.setWaitingForNanny(false);
               toast.success(`${otherName} is ready!`, {
                 description: 'Starting video call...',
               });

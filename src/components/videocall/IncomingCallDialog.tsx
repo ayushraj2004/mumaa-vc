@@ -155,6 +155,14 @@ export function IncomingCallDialog({ call }: IncomingCallDialogProps) {
       roomName: call.callRoomId || null,
     })
 
+    // Emit call-joined immediately so parent knows nanny is ready
+    setTimeout(() => {
+      emitSocket('call-joined', {
+        callId: call.callId,
+        toUserId: call.callerId,
+      })
+    }, 1000)
+
     const roomName = call.callRoomId || `mumaa-${call.callId}`
 
     const session: import('@/types').CallSession = {

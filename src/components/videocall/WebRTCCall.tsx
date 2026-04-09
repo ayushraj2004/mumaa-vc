@@ -585,9 +585,10 @@ export function WebRTCCall({
   // Auto-start for caller, or just get media ready for callee
   useEffect(() => {
     if (isCaller) {
+      // Wait 2.5s to give nanny time to mount WebRTCCall and register socket listeners
       const timer = setTimeout(() => {
         initiateCall()
-      }, 800)
+      }, 2500)
       return () => clearTimeout(timer)
     } else {
       if (!localStreamRef.current) {
