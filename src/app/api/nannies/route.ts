@@ -75,7 +75,29 @@ export async function GET(req: NextRequest) {
       orderBy: { rating: 'desc' },
     });
 
-    return NextResponse.json({ nannies }, { headers });
+    // Fetch live online users from socket service
+    let onlineUserIds = new Set<string>()
+    try {
+      const socketUrl = process.env.SOCKET_API_URL || 'http://localhost:3003'
+      const res = await fetch(`${socketUrl}/health`, { signal: AbortSignal.timeout(3000) })
+      if (res.ok) {
+        const data = await res.json()
+        onlineUserIds = new Set(data.onlineList || [])
+      }
+    } catch {
+      // fallback to DB isOnline if socket unreachable
+    }
+
+    // Merge live online status
+    const nanniesWithOnline = nannies.map((n) => ({
+      ...n,
+      user: n.user ? {
+        ...n.user,
+        isOnline: onlineUserIds.size > 0 ? onlineUserIds.has(n.user.id) : n.user.isOnline,
+      } : n.user,
+    }))
+
+    return NextResponse.json({ nannies: nanniesWithOnline }, { headers });
   } catch (error: any) {
     console.error('List nannies error:', error);
     return NextResponse.json(
